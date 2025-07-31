@@ -1,0 +1,115 @@
+day4 verilog project
+Design
+module sequence1010(in,out,clk,rst);
+parameter A=3'b000, B=3'b001 ,C=3'b010 ,D=3'b011,E=3'b100;
+input in,clk,rst;
+output reg out;
+reg [2:0] pointer;
+reg ot;
+always@(posedge clk)begin
+if(rst)
+begin
+pointer<=A;
+out<=0;
+end
+else begin
+case(pointer)
+  A: if(in)begin
+     pointer<=B;
+     end
+     else begin
+       pointer<=A;
+     end
+   B:if(in)begin
+     pointer<=B;
+     end
+     else begin
+       pointer<=C;
+     end
+   C:if(in)begin
+     pointer<=D;
+     end
+     else begin
+       pointer<=A;
+     out<=0;
+     end
+   D:if(in)begin
+     pointer<=B;
+     end
+     else begin
+       pointer<=E;
+     end
+   E:if(in)begin
+     pointer<=D;
+     end
+     else begin
+       pointer<=A;
+     end
+   default: begin
+          pointer <= A;
+ 
+        end
+endcase
+end
+end
+
+always@(*)
+begin
+if(pointer==E)
+begin 
+out =1;
+end
+else
+begin
+out=0;
+end
+end
+------------------------------------------------------------------------------------
+Testbench
+
+module tb_sequence1010;
+
+  reg in, clk, rst;
+  wire out;
+
+  sequence1010 uut (
+    .in(in),
+    .clk(clk),
+    .rst(rst),
+    .out(out)
+  );
+
+  // Clock generator
+  always #5 clk = ~clk;
+ 
+  initial begin
+   $monitor("Time: %0t | in=%b | out=%b", $time, in, out);
+
+    // Initialize
+    clk = 1;
+    rst = 1;
+    in = 0;
+
+    #10 rst = 0;
+
+    // Apply input sequence: 101010 (should detect two sequences)
+    in = 1; #10;
+    in = 0; #10;
+    in = 1; #10;
+    in = 0; #10;
+    in = 1; #10;
+    in = 0; #10;
+    in = 1; #10;
+    in = 0; #10;
+    in = 1; #10;
+    in = 0; #10;
+    in = 1; #10;
+    in = 0; #10;
+
+    $finish;
+  end
+/*always @(posedge clk) begin
+  $display("Time: %0t | in=%b | out=%b", $time, in, out);
+end*/
+
+endmodule
