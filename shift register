@@ -2,27 +2,40 @@
 Day 5
 
 Design
+
 module usr #(
     parameter N = 8
-)(in,out,mode,clk,rst);
+)(in,out,mode,clk,rst,data_in);
    
     input in;
     output reg[N-1:0] out;
     input clk,rst;
-    input mode;
-    
+    input [1:0]mode;
+    input [N-1:0]data_in;
     always@(posedge clk)
     begin
     if(rst)begin
     out<= {N{1'b0}};
     end
     else begin
-    if(mode==0) begin //right shift
+    /*if(mode==00) begin //right shift
     out<={in,out[N-1:1]};
     end // right shift
-    else if(mode==1) begin //left shift
+    else if(mode==11) begin //left shift
     out<={out[N-2:0],in};
     end // left shift close
+    else if (mode==01) begin // hold
+    out<=out;
+    end
+    else if (mode==10) begin // parallel
+    out<=data_in;
+    end*/
+    case (mode)
+    2'b00: out <= out;  //  Hold current value
+    2'b01: out <= {in, out[N-1:1]}; // Shift right
+    2'b10: out <= {out[N-2:0],in}; // Shift left
+    2'b11: out <= data_in;   // Parallel load
+endcase
     end //reset else close
     end // always begin closed
 endmodule
@@ -34,13 +47,15 @@ module usr_test();
     reg in;
     wire [7:0]out;
     reg clk,rst;
-    reg mode;
+    reg [1:0]mode;
+    reg data_in;
     
     usr dut (.in(in),
               .out(out),
               .clk(clk),
               .rst(rst),
-              .mode(mode));
+              .mode(mode),
+              .data_in(data_in));
       
     always #5 clk=~clk;
     initial begin
@@ -48,21 +63,24 @@ module usr_test();
     clk=0;
     in=0;
     rst=1;
-    mode=0;
+    mode=01;
+    data_in=00000000;
     #10 rst=0;in=0;
     #10 in=1;
     #10 in=0;
     #10 in=1;
     #10 in=0;
+    #10 mode=10;in=1;
     #10 in=1;
-    #10 mode=1;in=1;
-    #10 in=1;
-    #10 in=0;
-    #10 in=1;
-    #10 in=0;
     #10 in=0;
     #10 in=1;
     #10 in=0;
+    #10 mode=00;in=1;
+    #10 in=0;
+    #10 in=1;
+    #10 mode=11;
+    #20;data_in=10101010;
+    #100
     $finish;
     end
 endmodule
