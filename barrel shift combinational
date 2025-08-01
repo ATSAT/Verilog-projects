@@ -1,0 +1,56 @@
+
+module barrel_shift(in,out,shift,mode);
+input [7:0]in;
+input shift; // shift left=0, right =1
+input [1:0]mode; // 00 = 2 bits at a time 01=3 b at at 10=4 ata time
+output reg [7:0]out;
+initial begin
+out=4'b0000;
+end
+always@(*)begin
+case ({shift, mode})
+3'b000: out = in; 
+3'b001: out = {in[3:0], out[7:4]}; //4 bit
+3'b010: out = {in[2:0], out[7:3]};//3 bit
+3'b011: out = out; //same
+
+3'b100: out = in; 
+3'b101: out = {out[3:0],in[7:4]}; //4 bit
+3'b110: out = {out[2:0],in[7:3]};//3 bit
+3'b111: out = out; //same
+default out=4'b00000000;
+endcase
+end
+endmodule
+
+testbench 
+
+module barrelshift_tb();
+reg [7:0]in;
+reg shift; // shift left=0, right =1
+reg [1:0]m; // 00 = 2 bits at a time 01=3 b at at 10=4 ata time
+wire [7:0]out;
+
+barrel_shift dut(.in(in),
+                 .shift(shift),
+                 .mode(m),
+                 .out(out));
+
+initial begin
+#5;m=2'b11;in=8'b00000000;
+$monitor("time=%0d ,in=%b ,mode=%b,shift=%b,out=%b ",$time,in,m,shift,out);
+#5;shift=0;
+#5;in=8'b10101010;
+#5;m=2'b01;
+#5;m=2'b10;
+#5;m=2'b00;
+#5;m=2'b11;
+#5;shift=1;in=8'b11111111;
+#5;m=2'b01;
+#5;m=2'b10;
+#5;m=2'b00;
+#5;m=2'b11;
+#5;
+$finish;
+end
+endmodule
