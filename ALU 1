@@ -1,0 +1,58 @@
+
+
+module ALU#(parameter N=4 )(carry,X,Y,Z,overflow,zero,sign,parity,sel
+    );
+    input [N-1:0]X,Y;
+    output reg  [N:0]Z;
+    input [1:0]sel;
+    output reg carry;
+    output overflow,zero,sign,parity;
+    always@(*)
+    begin 
+    case (sel)
+      2'b00 : Z=X+Y;//add
+      2'b01 : Z=X-Y;
+      2'b10 : Z=X&Y;
+      2'b11 : Z=X^Y;
+      default: Z=5'b00000;
+    endcase 
+    carry=Z[N];
+    end
+    assign sign=Z[N-1];
+    assign zero= ~|Z[N-1:0];
+    assign parity=~^Z[N-1:0];
+    assign overflow = (X[N-1] & Y[N-1] & ~Z[N-1]) | (~X[N-1] & ~Y[N-1] & Z[N-1]);
+    
+endmodule
+
+
+module ALU_tb(
+    );
+    reg [3:0]X,Y;
+    reg [1:0]sel;
+    wire  [4:0]Z;
+    wire carry,overflow,zero,sign,parity;
+    ALU dut(.X(X),.Y(Y),.Z(Z),.carry(carry),.overflow(overflow),.zero(zero),.sign(sign),.parity(parity),.sel(sel));
+    initial begin
+        // Initial values
+        X = 4'b0000;
+        Y = 4'b0000;
+        sel=2'b00;//add
+        $monitor($time,"X=%b,Y=%b,Z=%b,carry=%b,zero=%b,sign=%b,overfllow=%b,parity=%b",X,Y,Z,carry,zero,sign,overflow,parity);
+        // Wait and apply new inputs
+        #5;
+         X = 4'b1000; Y = 4'b0101;sel=2'b00;   // Example: 8 + 5
+        #5;
+         X = 4'b0111; Y = 4'b0001;sel=2'b11;   // Example: 7 + 1
+        #5;
+         X = 4'b1111; Y = 4'b0001;sel=2'b01 ; // Overflow case: -1 + 1 = 0
+        #5;
+         X = 4'b1011; Y = 4'b1010; sel=2'b10;
+        #5 $finish;
+    end
+   // initial begin
+   // $monitor($time,"X=%b,Y=%b,Z=%b,sel=%b,carry=%b,zero=%b,sign=%b,overfllow=%b,parity=%b",X,Y,Z,sel,carry,zero,sign,overflow,parity);
+   //     $monitor("Time=%0t | X=%b, Y=%b, Z=%b, Carry=%b, Overflow=%b, Zero=%b, Sign=%b, Parity=%b",
+    //             $time, X, Y, Z, carry, overflow, zero, sign, parity);
+    //end
+endmodule
