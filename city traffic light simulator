@@ -1,0 +1,63 @@
+
+module C_T_L( out_1,out_2, out_3,out_4, clk
+    );
+    parameter Green =3'b001, Yellow=3'b010 , Red=3'b100;
+    parameter g=2'b00, y=2'b01, r=2'b10;
+    output [2:0]out_1;
+    output [2:0]out_2;
+    output [2:0]out_3;
+    output [2:0]out_4;
+    input clk;
+    wire c1,c2,c3,c4;
+     TL_FSM signal_1( out_1 ,clk ,g ,c4 ,c1);
+     TL_FSM signal_2( out_2 ,clk ,r ,c1 ,c2);
+     TL_FSM signal_3( out_3 ,clk ,r ,c2 ,c3);
+     TL_FSM signal_4( out_4 ,clk ,r ,c3 ,c4);
+endmodule
+/*
+endmodule*/
+module TL_FSM(out, clk, light_i, c_in, c_out);
+    input clk;
+    input c_in;
+    output reg c_out;
+    output reg [2:0] out;
+    input [1:0] light_i;
+
+    reg [1:0] light;
+
+    parameter Green = 3'b001, Yellow = 3'b010, Red = 3'b100;
+    parameter g = 2'b00, y = 2'b01, r = 2'b10;
+
+    initial begin
+        light = light_i;
+        c_out = 0;
+    end
+
+    always @(posedge clk) begin
+        case(light)
+            g: begin
+                out <= Green;
+                light <= y;
+                c_out <= 0;
+            end
+            y: begin
+                out <= Yellow;
+                light <= r;
+                c_out <= 1;  // tell next signal to start
+            end
+            r: begin
+                out <= Red;
+                if(c_in)
+                    light <= g;
+                else
+                    light <= r;
+                c_out <= 0;
+            end
+            default: begin
+                out <= Red;
+                light <= r;
+                c_out <= 0;
+            end
+        endcase
+    end
+endmodule
