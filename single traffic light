@@ -1,0 +1,41 @@
+
+module TL_FSM( out ,clk
+    );
+    input clk;
+    output reg [2:0]out;
+    reg [1:0]light;
+    parameter Green =3'b001, Yellow=3'b010 , Red=3'b100;
+    parameter g=2'b00, y=2'b01, r=2'b10;
+   
+    always@(posedge clk)
+    begin
+    case(light)
+    g: begin
+    out<=Green ; light<=y;
+    end
+    y: begin
+    out<=Yellow ; light<=r;
+    end
+    r: begin
+    out<=Red ; light<=g;
+    end
+    default :begin out<= Red;light <= Red;
+    end
+    endcase
+    end
+endmodule
+
+
+module TL_FSM_tb();
+reg clk;
+wire [2:0]out;
+TL_FSM uut (.clk(clk),.out(out));
+initial begin
+    clk = 0;
+    forever #5 clk = ~clk; // 10 time units clock period
+  end
+  initial begin
+$monitor($time,"out=%b",out);
+
+end
+endmodule
