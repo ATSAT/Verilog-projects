@@ -1,0 +1,95 @@
+
+module fifo_clk #(
+    parameter DEPTH = 8
+)(clk, rst, wr_en, rd_en, data_in, data_out, full,empty
+);
+    input clk;
+    input rst;
+    input wr_en;
+    input rd_en;
+    input  data_in;
+    output reg data_out;
+    output full;
+    output empty;
+
+    reg mem [0:DEPTH-1];
+
+    reg [$clog2(DEPTH)-1:0] wr_ptr = 0;
+    reg [$clog2(DEPTH)-1:0] rd_ptr = 0;
+
+    reg flag = 0;  // Toggle flag to differentiate full and empty
+
+    // Full if pointers are same AND flag is 1
+    assign full = (wr_ptr == rd_ptr) && (flag == 1);
+    
+    // Empty if pointers are same AND flag is 0
+    assign empty = (wr_ptr == rd_ptr) && (flag == 0);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            wr_ptr <= 0;
+            rd_ptr <= 0;
+            flag   <= 0;
+            data_out <= 0;
+        end else begin
+            // Write Operation
+            if (wr_en && !full) begin
+                mem[wr_ptr] <= data_in;
+                wr_ptr <= (wr_ptr + 1) % DEPTH;
+
+                // If write causes pointer wrap
+                if ((wr_ptr + 1) % DEPTH == rd_ptr)
+                    flag <= 1;  // Set full condition
+            end
+
+            // Read Operation
+            if (rd_en && !empty) begin
+                data_out <= mem[rd_ptr];
+                rd_ptr <= (rd_ptr + 1) % DEPTH;
+
+                // If read causes pointer wrap
+                if ((rd_ptr + 1) % DEPTH == wr_ptr)
+                    flag <= 0;  // Set empty condition
+            end
+        end
+    end
+
+endmodule
+testbench 
+
+module fifo_tb();
+reg clk, rst, wr_en, rd_en, data_in;
+wire data_out, full,empty;
+
+fifo_clk dut(.clk(clk),
+             .rst(rst),
+             .wr_en(wr_en),
+             .rd_en(rd_en),
+             .data_in(data_in),
+             .data_out(data_out),
+             .full(full),
+             .empty(empty)
+             );
+             
+ always #5 clk=~clk;
+ initial begin
+ $monitor("Time=%0t clk=%b rst=%b wr_en=%b rd_en=%b data_in=%b data_out=%b full=%b empty=%b",
+          $time, clk, rst, wr_en, rd_en, data_in, data_out, full, empty);
+ clk=0;
+ rst=1;
+ wr_en=0;
+ rd_en=0;
+ data_in=0;
+ #10;rst=0; wr_en=1;
+ data_in=1'b1;
+ #10;data_in=1'b0;
+ #10;data_in=1'b1;
+ #10;data_in=1'b0;
+ #10;data_in=1'b1;
+ #10;data_in=1'b0;
+ #10;data_in=1'b1;
+ #10;data_in=1'b0;
+ #10; wr_en=0;rd_en=1;
+ #50;$finish;
+ end
+endmodule
