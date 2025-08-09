@@ -1,0 +1,133 @@
+
+module pipe_ALU#(parameter N=4 )(carry,X,Y,Z/*,overflow,zero,sign,parity*/,sel
+    );
+    input [N-1:0]X,Y;
+    output reg  [N:0]Z;
+    input [2:0]sel;
+    output reg carry;
+    /*output overflow,zero,sign,parity;*/
+    always@(*)
+    begin 
+    case (sel)
+      3'b001 : Z=X+Y;//add
+      3'b011 : Z=X-Y;//sub
+      3'b100 : Z=X&Y;//and
+      3'b101 : Z=X^Y;//xor
+      3'b110 : Z=X|Y;//or
+      default: Z=5'b00000;
+    endcase 
+    carry=Z[N];
+    end
+
+endmodule
+
+module pipeline(clk,rst,in,out,valid_s3);
+input clk,rst;
+input [10:0]in;// input=3bit operand+ 4bit X+4bit Y
+output reg[4:0]out;//output=carry+4 bit out+sign+zero
+reg valid_s1;
+reg valid_s2;
+output reg valid_s3;
+reg [2:0]func;
+reg[3:0]x,y;
+reg [10:0]d;
+reg [4:0]out_reg;
+wire [4:0]alu_reg;
+wire carry_reg;
+// connect
+pipe_ALU alu_stage(.X(x), .Y(y),
+        .sel(func),
+        .Z(alu_reg), .carry(carry_reg));
+             // stage 1 fetch
+always@(posedge clk) begin
+if(rst) begin
+d<=10*(1'b0);
+valid_s1<=1'b0;
+end    
+else begin
+d<=in;
+valid_s1<=1'b1;
+end//else begin
+end//clk begin
+
+                //stage 2 Decode
+always@(posedge clk)begin
+if(rst) begin
+func<=3'b000;
+x<=4'b0000;
+y<=4'b0000;
+valid_s2<=0;
+end   
+else
+//if(valid_s1)
+begin
+func<=d[10:8];
+x<=d[7:4];
+y<=d[3:0];
+valid_s2 <= valid_s1;
+//valid_s1=0;
+end //else
+end//clk
+               // s3 result
+always@(posedge clk)begin
+if(rst) begin
+out_reg<=5'b00000;
+valid_s3<=0;
+end   
+else 
+//if(valid_s2)
+begin
+
+  out_reg<=alu_reg;
+  //valid_s2=0;
+  valid_s3 <= valid_s2;
+end// else
+end// clk
+             // s4 output
+always@(posedge clk)begin
+if(rst) begin
+out<=5'b00000;
+//valid_s4<=0;
+end   
+else begin
+if(valid_s3) begin
+out<=out_reg;
+//valid_s3=0;
+end
+end// else
+end// clk
+endmodule
+
+Testbench
+
+module pipeline_tb();
+reg clk,rst;
+reg [10:0]in;
+wire [4:0]out;
+wire valid_s3;
+pipeline dut (.clk(clk),
+              .rst(rst),
+              .in(in),
+              .out(out),
+              .valid_s3(valid_s3));
+              
+always #1 clk=~clk;
+
+initial begin
+ $monitor("time=%0t, rst=%b ,in=%b, out=%b, valid_out=%b", $time, rst, in, out,valid_s3);
+        
+        clk = 0;
+        rst = 1;
+        in  = 11'b0;
+
+        #5 rst = 0;                         // Release reset
+        #5 in = 11'b00101000010;           // ADD  (func=001, X=1000, Y=0101) out= 00110
+        #5 in = 11'b01111100100;           // SUB  (func=011, X=1011, Y=0010) out= 01010
+        #5 in = 11'b10011100011;           // AND  (func=010, X=1110, Y=0111) out= 00010
+        #5 in = 11'b11010000101;           // OR  (func=110, X=0001, Y=1010) out= 01101
+        #5 in = 11'b00111001010;           // ADD  (func=001, X=1000, Y=0101) out= 10110
+        
+        
+  #20 $finish;
+end
+endmodule
