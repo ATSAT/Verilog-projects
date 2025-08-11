@@ -1,0 +1,60 @@
+module gray_counter #(parameter N=4) (
+    input  wire             clk,
+    input  wire             rst,
+    input  wire             up_down,
+    output reg  [N-1:0]     out
+);
+
+    reg [N-1:0] out_temp;       // Binary counter value
+    wire [N-1:0] out_gray;      // Gray code value
+
+    // Binary to Gray conversion
+    assign out_gray = out_temp ^ (out_temp >> 1);
+
+    // Counter logic
+    always @(posedge clk) begin
+        if (rst) begin
+            out_temp <= {N{1'b0}};
+            out      <= {N{1'b0}};
+        end else begin
+            if (up_down)
+                out_temp <= out_temp + 1'b1;  // Count up
+            else
+                out_temp <= out_temp - 1'b1;  // Count down
+
+            out <= out_gray;  // Update Gray code output
+        end
+    end
+Testbench 
+module gray_counter #(parameter N=4) (
+    input  wire             clk,
+    input  wire             rst,
+    input  wire             up_down,
+    output reg  [N-1:0]     out
+);
+
+    reg [N-1:0] out_temp;       // Binary counter value
+    wire [N-1:0] out_gray;      // Gray code value
+
+    // Binary to Gray conversion
+    assign out_gray = out_temp ^ (out_temp >> 1);
+
+    // Counter logic
+    always @(posedge clk) begin
+        if (rst) begin
+            out_temp <= {N{1'b0}};
+            out      <= {N{1'b0}};
+        end else begin
+            if (up_down)
+                out_temp <= out_temp + 1'b1;  // Count up
+            else
+                out_temp <= out_temp - 1'b1;  // Count down
+
+            out <= out_gray;  // Update Gray code output
+        end
+    end
+
+endmodule
+
+
+endmodule
