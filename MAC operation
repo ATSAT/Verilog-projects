@@ -1,0 +1,41 @@
+CODE 
+// Code your design here
+
+
+module mac(X,Y,clk,rst,acc);
+input clk,rst;
+input [3:0]X,Y;
+output reg [7:0] acc;
+reg [7:0]prod;
+always @(posedge clk) begin
+if(rst) begin
+acc<=0;
+prod <= 0;
+end
+else begin
+prod =X*Y;
+acc<=acc+prod;
+end
+end
+endmodule
+
+testbench
+module mac_tb();
+reg [3:0]X,Y;
+reg clk,rst;
+wire [7:0]acc;
+
+mac dut (.X(X),.Y(Y),.clk(clk),.rst(rst),.acc(acc));
+always #5 clk=~clk;
+initial begin
+   $dumpfile("mac_tb.vcd");    // Name of dump file
+   $dumpvars(0, mac_tb);       // 0 = dump all variables in mac_tb 
+$monitor("time=%0d,X=%b,Y=%b,output=%b",$time,X,Y,acc);
+clk=0;rst=1;X = 0; Y = 0;
+#10;rst=0;#10;
+X=4'b1010;Y=4'b1111;#10;
+X = 4'b0001; Y = 4'b0011; #10; 
+X = 4'b0101; Y = 4'b0010; 
+#10;$finish;
+end
+endmodule
